@@ -1,0 +1,5 @@
+config.py
+*.db.*
+*.log
+.vscode
+__pycache__
