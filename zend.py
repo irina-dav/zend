@@ -19,9 +19,9 @@ url_api = f'https://{config.zend_subdomain}.zendesk.com/api/v2/'
 url_posts = url_api + 'community/posts.json?sort_by=updated_at&include=topics'
 url_post_comments = url_api + 'community/posts/{post_id}/comments.json'
 url_post = url_api + 'community/posts/{post_id}.json'
-url_articles = url_api + \
-    'help_center/incremental/articles.json?start_time={start_time}\
-    &include=sections'
+url_articles = url_api + (
+    'help_center/incremental/articles.json?start_time={start_time}'
+    '&include=sections')
 url_article_comments = url_api + \
     'help_center/ru/articles/{article_id}/comments.json'
 
@@ -96,7 +96,7 @@ def send_to_telegram(*messages):
 def get_z_objects(api_url, cls, start_date):
     cls_name = cls.__name__
     data_objects = fetch_data(api_url)
-    if data_objects['count'] == 0:
+    if data_objects is None or data_objects['count'] == 0:
         objects = []
     else:
         if cls is Article:
@@ -148,17 +148,17 @@ if __name__ == '__main__':
 
     if articles_new and len(articles_new) > 0:
         html_articles = \
-            '<b>Обновления в статьях:</b>\n\n' + '\n\n'\.join(
+            '<b>Обновления в статьях:</b>\n\n' + '\n\n'.join(
                 [f'[{a.section}]\n{a.title}\
                  <a href="{a.html_url}">\nЧитать статью</a>'
                  for a in articles_new])
 
     if articles_with_new_comm and len(articles_with_new_comm) > 0:
         html_articles_new_comm =\
-            '<b>Cтатьи с новыми комментариями:</b>\n\n' + '\n\n'\
-            .join([f'[{a.section}]\n{a.title}\
-                  <a href="{a.html_url}">\nЧитать статью</a>'
-                  for a in articles_with_new_comm])
+            '<b>Cтатьи с новыми комментариями:</b>\n\n' + '\n\n'.join(
+                [f'[{a.section}]\n{a.title}\
+                 <a href="{a.html_url}">\nЧитать статью</a>'
+                 for a in articles_with_new_comm])
 
     posts_new, posts_with_new_comm = get_z_objects(url_posts, Post, start_date)
 
