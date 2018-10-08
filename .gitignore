@@ -3,3 +3,4 @@ config.py
 *.log
 .vscode
 __pycache__
+notes.txt

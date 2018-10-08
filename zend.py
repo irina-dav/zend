@@ -146,14 +146,14 @@ if __name__ == '__main__':
     articles_new, articles_with_new_comm = get_z_objects(
         url_articles.format(start_time=start_date_unix), Article, start_date)
 
-    if articles_new and len(articles_new) > 0:
+    if articles_new:
         html_articles = \
             '<b>Обновления в статьях:</b>\n\n' + '\n\n'.join(
                 [f'[{a.section}]\n{a.title}\
                  <a href="{a.html_url}">\nЧитать статью</a>'
                  for a in articles_new])
 
-    if articles_with_new_comm and len(articles_with_new_comm) > 0:
+    if articles_with_new_comm:
         html_articles_new_comm =\
             '<b>Cтатьи с новыми комментариями:</b>\n\n' + '\n\n'.join(
                 [f'[{a.section}]\n{a.title}\
@@ -162,14 +162,14 @@ if __name__ == '__main__':
 
     posts_new, posts_with_new_comm = get_z_objects(url_posts, Post, start_date)
 
-    if posts_new and len(posts_new) > 0:
+    if posts_new:
         html_posts_new = \
             '<b>Новые посты:</b>\n\n' + '\n\n'.join(
                 [f'[{p.topic}]\n{p.title}\
                  <a href="{p.html_url}">\nЧитать пост</a>'
                  for p in posts_new])
 
-    if posts_with_new_comm and len(posts_with_new_comm) > 0:
+    if posts_with_new_comm:
         html_posts_new_comm = \
             '<b>Посты с новыми комментариями:</b>\n\n' + '\n\n'.join(
                 [f'[{p.topic}]\n{p.title}\
