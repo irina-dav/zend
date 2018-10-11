@@ -32,6 +32,8 @@ logging.basicConfig(
             logging.StreamHandler()
     ])
 
+tzu = tzutc()
+
 
 class ZendObject():
     def __init__(self, json_data):
@@ -66,7 +68,6 @@ class Post(ZendObject):
 
 
 def get_start_date():
-    tzu = tzutc()
     with shelve.open(config.shelve_name) as db:
         start_date = db.get(
             'start_date', datetime.now().astimezone(tzu) - timedelta(days=7))
