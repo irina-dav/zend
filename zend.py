@@ -199,9 +199,7 @@ if __name__ == '__main__':
     html_articles, html_articles_new_comm = search_updates(Article, start_date)
     html_posts_new, html_posts_new_comm = search_updates(Post, start_date)
 
-    print(html_articles, html_articles_new_comm,
-          html_posts_new, html_posts_new_comm)
-    # send_to_telegram(html_articles, html_articles_new_comm,
-    #                 html_posts_new, html_posts_new_comm)
+    send_to_telegram(html_articles, html_articles_new_comm,
+                     html_posts_new, html_posts_new_comm)
 
     upd_start_date(datetime.now().astimezone(tzu))
