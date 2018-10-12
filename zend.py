@@ -13,26 +13,11 @@ from telegram.ext import Updater
 
 import config
 
-url_api = f'https://{config.zend_subdomain}.zendesk.com/api/v2/'
-url_posts = url_api + 'community/posts.json?sort_by=updated_at&include=topics'
-url_post_comments = url_api + 'community/posts/{object_id}/comments.json'
-url_post = url_api + 'community/posts/{post_id}.json'
-url_articles = url_api + (
-    'help_center/incremental/articles.json?start_time={start_time}'
-    '&include=sections')
-url_article_comments = url_api + \
-    'help_center/ru/articles/{object_id}/comments.json'
-
-logging.basicConfig(
-    format='%(asctime)s %(levelname)s %(module)s - %(funcName)s: %(message)s',
-    level=logging.DEBUG,
-    datefmt="%Y-%m-%d %H:%M:%S",
-    handlers=[
-            logging.FileHandler('zend.log'),
-            logging.StreamHandler()
-    ])
+URL_API = f'https://{config.zend_subdomain}.zendesk.com/api/v2/'
 
 tzu = tzutc()
+
+logging.basicConfig(**config.log_config)
 
 
 class ZendObject():
@@ -48,6 +33,19 @@ class ZendObject():
 
 
 class Article(ZendObject):
+    title_new = 'Обновления в статьях'
+    title_new_comments = 'Cтатьи с новыми комментариями'
+
+    @property
+    def url_comments(self):
+        return URL_API + f'help_center/ru/articles/{self.id}/comments.json'
+
+    @classmethod
+    def get_url_objects(cls, timestamp=None):
+        return URL_API + \
+            f'help_center/incremental/articles.json?start_time={timestamp}' \
+            '&include=sections'
+
     def __init__(self, json_data, section):
         super().__init__(json_data)
         self.section = section
@@ -58,13 +56,25 @@ class Article(ZendObject):
 
 
 class Post(ZendObject):
+    title_new = 'Новые посты'
+    title_new_comments = 'Посты с новыми комментариями'
+
+    @property
+    def url_comments(self):
+        return URL_API + f'community/posts/{self.id}/comments.json'
+
+    @classmethod
+    def get_url_objects(cls, timestamp=None):
+        return URL_API + \
+            'community/posts.json?sort_by=updated_at&include=topics'
+
     def __init__(self, json_data, topic):
         super().__init__(json_data)
         self.topic = topic
 
     def repr_html(self):
         return f'[{self.topic}]\n{self.title}\
-                <a href="{self.html_url}">\nЧитать пост</a>'
+            <a href="{self.html_url}">\nЧитать пост</a>'
 
 
 def get_start_date():
@@ -82,9 +92,7 @@ def upd_start_date(new_date):
 def fetch_url(url):
     response = requests.get(url, auth=(config.zend_user, config.zend_pwd))
     if response.status_code != 200:
-        logging.error(
-            f'Response status: {response.status_code}. \
-            Problem with the request. Exiting')
+        logging.error(f'Response status: {response.status_code}. Exiting')
         return None
     return response.json()
 
@@ -128,7 +136,7 @@ def create_objects_from_json(json_data, start_date):
         raise Exception('Wrong format of json data')
 
 
-def get_zend_new_upd_objects(api_url, start_date):
+def get_objects(api_url, start_date):
     logging.info(f'Fetch url {api_url}')
     json_data = fetch_url(api_url)
 
@@ -144,31 +152,42 @@ def get_zend_new_upd_objects(api_url, start_date):
     return (objects_new, objects_upd)
 
 
-def get_zend_new_comments(objects_upd, start_date):    
-    if not objects_upd:
-        return []
-
-    urls = {'Article': url_article_comments, 'Post': url_post_comments}
-    try:
-        cls_name = objects_upd[0].__class__.__name__
-        logging.debug(f'cls_name={cls_name}')
-        url = urls[cls_name]
-    except KeyError:
-        raise KeyError('Error getting comment url')
+def get_new_comments(objects_upd, start_date):
     objects_with_new_comm = []
     for o in objects_upd:
-        json_comments = fetch_url(url.format(object_id=o.id))
+        json_comments = fetch_url(o.url_comments)
         if any(parse(comm['updated_at']) > start_date
                 for comm in json_comments['comments']):
-                    objects_with_new_comm.append(o)
+            objects_with_new_comm.append(o)
 
-    logging.info(
-        f'{cls_name}s, with new comments count: {len(objects_with_new_comm)}')
+    logging.info(f'With new comments count: {len(objects_with_new_comm)}')
 
     return objects_with_new_comm
 
 
-def create_html_block(title, elements):
+def search_updates(cls, start_date):
+    html_new = html_new_comm = None
+
+    timestamp = int(start_date.timestamp())
+    logging.info(f'Start date: {start_date}, timestamp: {timestamp}')
+
+    objects_new, objects_upd = get_objects(
+        cls.get_url_objects(timestamp), start_date)
+    objects_with_new_comm = []
+    if objects_upd:
+        objects_with_new_comm = get_new_comments(objects_upd, start_date)
+
+    if objects_new:
+        html_new = format_html_block(cls.title_new, objects_new)
+
+    if objects_with_new_comm:
+        html_new_comm = format_html_block(
+            cls.title_new_comments, objects_with_new_comm)
+
+    return (html_new, html_new_comm)
+
+
+def format_html_block(title, elements):
     return f'[<b>{title}:</b>\n\n' + '\n\n'.join(
         [elem.repr_html() for elem in elements])
 
@@ -177,31 +196,12 @@ if __name__ == '__main__':
         html_posts_new = html_posts_new_comm = None
 
     start_date = get_start_date()
-    timestamp = int(start_date.timestamp())
-    logging.info(f'Start date: {start_date}, timestamp: {timestamp}')
+    html_articles, html_articles_new_comm = search_updates(Article, start_date)
+    html_posts_new, html_posts_new_comm = search_updates(Post, start_date)
 
-    articles_new, articles_upd = get_zend_new_upd_objects(
-        url_articles.format(start_time=timestamp), start_date)
-    articles_with_new_comm = get_zend_new_comments(articles_upd, start_date)
-
-    if articles_new:
-        html_articles = create_html_block('Обновления в статьях', articles_new)
-
-    if articles_with_new_comm:
-        html_articles_new_comm = create_html_block(
-            'Cтатьи с новыми комментариями', articles_with_new_comm)
-
-    posts_new, posts_upd = get_zend_new_upd_objects(url_posts, start_date)
-    posts_with_new_comm = get_zend_new_comments(posts_upd, start_date)
-
-    if posts_new:
-        html_posts_new = create_html_block('Новые посты', posts_new)
-
-    if posts_with_new_comm:
-        html_posts_new_comm = create_html_block(
-            'Посты с новыми комментариями', posts_with_new_comm)
-
-    send_to_telegram(html_articles, html_articles_new_comm,
-                     html_posts_new, html_posts_new_comm)
+    print(html_articles, html_articles_new_comm,
+          html_posts_new, html_posts_new_comm)
+    # send_to_telegram(html_articles, html_articles_new_comm,
+    #                 html_posts_new, html_posts_new_comm)
 
     upd_start_date(datetime.now().astimezone(tzu))
