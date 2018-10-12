@@ -78,9 +78,8 @@ class Post(ZendObject):
 
 
 def get_start_date():
-    with shelve.open(config.shelve_name) as db:
-        start_date = db.get(
-            'start_date', datetime.now().astimezone(tzu) - timedelta(days=7))
+    start_date = db.get(
+        'start_date', datetime.now().astimezone(tzu) - timedelta(days=7))
     return start_date
 
 
@@ -188,7 +187,7 @@ def search_updates(cls, start_date):
 
 
 def format_html_block(title, elements):
-    return f'[<b>{title}:</b>\n\n' + '\n\n'.join(
+    return f'<b>{title}:</b>\n\n' + '\n\n'.join(
         [elem.repr_html() for elem in elements])
 
 if __name__ == '__main__':
