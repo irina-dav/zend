@@ -51,7 +51,7 @@ class Article(ZendObject):
         self.section = section
 
     def repr_html(self):
-        return f'[{self.section}]\n{replace_html_tags(self.title)}\ 
+        return f'[{self.section}]\n{replace_html_tags(self.title)}\
             <a href="{self.html_url}">\nЧитать статью</a>'
 
 
@@ -78,8 +78,8 @@ class Post(ZendObject):
 
 
 def replace_html_tags(text):
-    tags_to_replace = {'&': '&amp;', '<': '&lt;', '>': '&gt;' }
-    for k,v in tags_to_replace.items():
+    tags_to_replace = {'&': '&amp;', '<': '&lt;', '>': '&gt;'}
+    for k, v in tags_to_replace.items():
         text = text.replace(k, v)
     return text
 
