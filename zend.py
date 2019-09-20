@@ -51,7 +51,8 @@ class Article(ZendObject):
         self.section = section
 
     def repr_html(self):
-        return f'[{self.section}]\n{replace_html_tags(self.title)} \
+        title = replace_html_tags(self.title)
+        return f'[{self.section}]\n{title}\
             <a href="{self.html_url}">\nЧитать статью</a>'
 
 
