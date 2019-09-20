@@ -51,7 +51,7 @@ class Article(ZendObject):
         self.section = section
 
     def repr_html(self):
-        return f'[{self.section}]\n{replace_html_tags(self.title)}\
+        return f'[{self.section}]\n{replace_html_tags(self.title)} \
                 <a href="{self.html_url}">\nЧитать статью</a>'
 
 
@@ -73,7 +73,7 @@ class Post(ZendObject):
         self.topic = topic
 
     def repr_html(self):
-        return f'[{self.topic}]\n{replace_html_tags(self.title)}\
+        return f'[{self.topic}]\n{replace_html_tags(self.title)} \
             <a href="{self.html_url}">\nЧитать пост</a>'
 
 def replace_html_tags(text):
