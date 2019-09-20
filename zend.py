@@ -52,7 +52,7 @@ class Article(ZendObject):
 
     def repr_html(self):
         return f'[{self.section}]\n{replace_html_tags(self.title)} \
-                <a href="{self.html_url}">\nЧитать статью</a>'
+            <a href="{self.html_url}">\nЧитать статью</a>'
 
 
 class Post(ZendObject):
