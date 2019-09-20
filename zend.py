@@ -51,8 +51,7 @@ class Article(ZendObject):
         self.section = section
 
     def repr_html(self):
-        title = replace_html_tags(self.title)
-        return f'[{self.section}]\n{title}\
+        return f'[{self.section}]\n{replace_html_tags(self.title)}\ 
             <a href="{self.html_url}">\nЧитать статью</a>'
 
 
@@ -74,8 +73,9 @@ class Post(ZendObject):
         self.topic = topic
 
     def repr_html(self):
-        return f'[{self.topic}]\n{replace_html_tags(self.title)} \
+        return f'[{self.topic}]\n{replace_html_tags(self.title)}\
             <a href="{self.html_url}">\nЧитать пост</a>'
+
 
 def replace_html_tags(text):
     tags_to_replace = {'&': '&amp;', '<': '&lt;', '>': '&gt;' }
@@ -83,10 +83,11 @@ def replace_html_tags(text):
         text = text.replace(k, v)
     return text
 
+
 def get_start_date():
     with shelve.open(config.shelve_name) as db:
         start_date = db.get(
-            'start_date', datetime.now().astimezone(TZU) - timedelta(days=7))
+            'start_date', datetime.now().astimezone(tzu) - timedelta(days=7))
     return start_date
 
 
@@ -196,6 +197,7 @@ def search_updates(cls, start_date):
 def format_html_block(title, elements):
     return f'<b>{title}:</b>\n\n' + '\n\n'.join(
         [elem.repr_html() for elem in elements])
+
 
 if __name__ == '__main__':
     html_articles = html_articles_new_comm = \
