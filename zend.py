@@ -51,7 +51,7 @@ class Article(ZendObject):
         self.section = section
 
     def repr_html(self):
-        return f'[{self.section}]\n{self.title}\
+        return f'[{self.section}]\n{replace_html_tags(self.title)}\
                 <a href="{self.html_url}">\nЧитать статью</a>'
 
 
@@ -73,14 +73,19 @@ class Post(ZendObject):
         self.topic = topic
 
     def repr_html(self):
-        return f'[{self.topic}]\n{self.title}\
+        return f'[{self.topic}]\n{replace_html_tags(self.title)}\
             <a href="{self.html_url}">\nЧитать пост</a>'
 
+def replace_html_tags(text):
+    tags_to_replace = {'&': '&amp;', '<': '&lt;', '>': '&gt;' }
+    for k,v in tags_to_replace.items():
+        text = text.replace(k, v)
+    return text
 
 def get_start_date():
     with shelve.open(config.shelve_name) as db:
         start_date = db.get(
-            'start_date', datetime.now().astimezone(tzu) - timedelta(days=7))
+            'start_date', datetime.now().astimezone(TZU) - timedelta(days=7))
     return start_date
 
 
@@ -99,7 +104,7 @@ def fetch_url(url):
 
 def send_to_telegram(*messages):
     try:
-        updater = Updater(token=config.token,
+        updater = Updater(token=config.token, use_context=True,
                           request_kwargs=config.bot_request_args)
         bot = updater.bot
         message = '\n\n'.join([m for m in messages if m])
@@ -196,6 +201,7 @@ if __name__ == '__main__':
         html_posts_new = html_posts_new_comm = None
 
     start_date = get_start_date()
+
     html_articles, html_articles_new_comm = search_updates(Article, start_date)
     html_posts_new, html_posts_new_comm = search_updates(Post, start_date)
 
